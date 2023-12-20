@@ -4,8 +4,8 @@ This is a python script to monitor the Peggo Injective by specifying the orchest
 
 ## Usage
 
-`python injective-peggo-monitoring.py inj1xvn......`
+`python injective-peggo-monitoring.py`
 
 ## TODO
 
-- Add requireements.txt
+- Add requirements.txt
