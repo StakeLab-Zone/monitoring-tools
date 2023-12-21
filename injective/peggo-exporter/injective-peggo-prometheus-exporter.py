@@ -8,7 +8,7 @@ import time
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Initialize a Prometheus Gauge
-LATE_GAUGE = Gauge('injective_peggo_latency', 'Orchestrator latency of the Injective Peggo')
+LATENCY_GAUGE = Gauge('injective_peggo_latency', 'Orchestrator latency of the Injective Peggo')
 
 def main():
     # Read environment variables
@@ -55,7 +55,7 @@ def main():
         lon = int(lon_data['state']['last_observed_nonce']) if 'state' in lon_data and 'last_observed_nonce' in lon_data['state'] else None
         lce = int(lce_data['last_claim_event']['ethereum_event_nonce']) if 'last_claim_event' in lce_data and 'ethereum_event_nonce' in lce_data['last_claim_event'] else None
         delay = lce - lon
-        LATE_GAUGE.set(delay)
+        LATENCY_GAUGE.set(delay)
 
     else:
         if lon_response.status_code != 200:
