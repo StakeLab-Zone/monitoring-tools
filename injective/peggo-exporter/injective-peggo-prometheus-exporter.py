@@ -68,4 +68,5 @@ if __name__ == "__main__":
     start_http_server(8000)
     while True:
         main()
+        logging.info("Sleeping for 5 minutes before the next run.")
         time.sleep(300)
