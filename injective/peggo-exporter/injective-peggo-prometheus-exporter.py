@@ -9,6 +9,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 # Initialize a Prometheus Gauge
 LATENCY_GAUGE = Gauge('injective_peggo_latency', 'Orchestrator latency of the Injective Peggo')
+CHECK_INTERVAL = os.getenv('CHECK_INTERVAL', 300)
 
 def main():
     # Read environment variables
@@ -68,5 +69,5 @@ if __name__ == "__main__":
     start_http_server(8000)
     while True:
         main()
-        logging.info("Sleeping for 5 minutes before the next run.")
-        time.sleep(300)
+        logging.info(f"Sleeping for {CHECK_INTERVAL} seconds before the next run.")
+        time.sleep(CHECK_INTERVAL)
