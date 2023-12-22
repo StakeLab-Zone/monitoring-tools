@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 # Initialize a Prometheus Gauge
 LATENCY_GAUGE = Gauge('injective_peggo_latency', 'Orchestrator latency of the Injective Peggo')
-CHECK_INTERVAL = os.getenv('CHECK_INTERVAL', 300)
+CHECK_INTERVAL = int(os.getenv('CHECK_INTERVAL', 300))
 
 def main():
     # Read environment variables
