@@ -44,14 +44,14 @@ Run the script directly using Python:
   python umee-pricefeeder-exporter.py
   ```
 
-Make sure to set the environment variables APIURL and OPERATOR_ADDRESS as needed.
+Make sure to set the environment variables APIURL and OPERATOR_ADDRESS as needed. CHECK_INTERVAL is optional.
 
 Using Docker:
 Build and run the application using Docker:
 
 ```
-docker build -t umee-pricefeeder-exporter .
-docker run -p 8000:8000 umee-pricefeeder-exporter
+docker build -t umee-pricefeeder-exporter:latest .
+docker run -p 8000:8000 umee-pricefeeder-exporter:latest
 ```
 
 **Configuration**
@@ -60,6 +60,7 @@ The application can be configured using the following environment variables:
 
     APIURL: URL of the Umee API (default: api-umee.cosmos-spaces.cloud).
     OPERATOR_ADDRESS: Operator address to monitor (default: umeevaloper1gxgsq7jpkg0f8vfkk60c4rd30z4cgs6lyqtglf).
+    CHECK_INTERVAL: Check interval in seconds (default: 300).
 
 **Prometheus Metrics**
 
