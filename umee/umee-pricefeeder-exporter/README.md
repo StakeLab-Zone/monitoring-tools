@@ -23,8 +23,8 @@ It periodically checks for missing votes and exposes this data as a Prometheus m
 **Clone the Repository:**
    
    ```
-   git clone https://github.com/[YourUsername]/umee-votes-inspector.git
-   cd umee-votes-inspector
+   git clone https://github.com/StakeLab-Zone/monitoring-tools.git
+   cd umee/umee-pricefeeder-exporter
   ```
     
 **Install Dependencies:**
@@ -47,8 +47,8 @@ Using Docker:
 Build and run the application using Docker:
 
 ```
-docker build -t umee-votes-inspector .
-docker run -p 8000:8000 umee-votes-inspector
+docker build -t umee-pricefeeder-exporter .
+docker run -p 8000:8000 umee-pricefeeder-exporter
 ```
 
 **Configuration**
