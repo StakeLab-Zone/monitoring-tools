@@ -10,7 +10,7 @@ Build the docker image:
 
 Run the docker image:
 
-`docker run -p 8000:8000 -e ORCHESTRATOR_ADDRESS=inj1xvnlzs3xw2fy3y2jzj3kck0n532jx9kltvmm8k peggo-exporter:latest -e ENV API_ENDPOINT=https://lcd.injective.network peggo-exporter:latest`
+`docker run -p 8000:8000 -e ORCHESTRATOR_ADDRESS=inj1xvnlzs3xw2fy3y2jzj3kck0n532jx9kltvmm8k peggo-exporter:latest -e ENV API_ENDPOINT=https://lcd.injective.network -e CHECK_INTERVAL=300 peggo-exporter:latest`
 
 ## Kubernetes
 
