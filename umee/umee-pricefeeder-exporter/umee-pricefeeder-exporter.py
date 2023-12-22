@@ -10,6 +10,7 @@ from prometheus_client import Counter, start_http_server, Gauge
 REQUESTS_TOTAL = Counter('requests_total', 'Total number of requests made')
 ERRORS_TOTAL = Counter('errors_total', 'Total number of errors encountered')
 UMEE_VOTES_GAUGE = Gauge('umee_missing_votes', 'Umee missing votes')
+CHECK_INTERVAL = os.getenv('CHECK_INTERVAL', 300)
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -96,5 +97,5 @@ if __name__ == "__main__":
 
     while True:
         votes_inspector(APIURL=APIURL, operator_address=OPERATOR_ADDRESS)
-        logging.info("Sleeping for 5 minutes before the next run.")
-        time.sleep(300)
+        logging.info(f"Sleeping for {CHECK_INTERVAL} seconds before the next run.")
+        time.sleep(CHECK_INTERVAL)
