@@ -1,6 +1,7 @@
 # Umee Votes Inspector
 
 ## Overview
+
 The Umee Votes Inspector is a Python application designed to monitor and report the voting status of an operator in the Umee network. 
 It periodically checks for missing votes and exposes this data as a Prometheus metric. 
 
@@ -28,6 +29,7 @@ It periodically checks for missing votes and exposes this data as a Prometheus m
   ```
     
 **Install Dependencies:**
+
 If you are not using Docker, install the dependencies manually:
   ```
   pip install -r requirements.txt
