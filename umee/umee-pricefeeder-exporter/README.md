@@ -38,6 +38,7 @@ If you are not using Docker, install the dependencies manually:
 **Usage**
 
 Direct Execution:
+
 Run the script directly using Python:
   ```
   python umee-pricefeeder-exporter.py
