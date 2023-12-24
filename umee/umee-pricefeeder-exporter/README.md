@@ -62,6 +62,10 @@ The application can be configured using the following environment variables:
     OPERATOR_ADDRESS: Operator address to monitor (default: umeevaloper1gxgsq7jpkg0f8vfkk60c4rd30z4cgs6lyqtglf).
     CHECK_INTERVAL: Check interval in seconds (default: 300).
 
+**Kubernetes**
+
+For Kubernetes users, there's an Helm chart [here](https://github.com/StakeLab-Zone/StakeLab/tree/main/Charts/umee-pricefeeder-exporter).
+
 **Prometheus Metrics**
 
 Access the Prometheus metrics at http://localhost:8000.
