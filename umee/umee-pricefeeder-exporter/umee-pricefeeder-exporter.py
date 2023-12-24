@@ -10,6 +10,7 @@ from prometheus_client import Counter, start_http_server, Gauge
 REQUESTS_TOTAL = Counter('requests_total', 'Total number of requests made')
 ERRORS_TOTAL = Counter('errors_total', 'Total number of errors encountered')
 UMEE_VOTES_GAUGE = Gauge('umee_missing_votes', 'Umee missing votes')
+UMEE_TOTAL_VOTES_GAUGE = Gauge('umee_total_votes', 'Umee total votes')
 CHECK_INTERVAL = int(os.getenv('CHECK_INTERVAL', 300))
 
 # Initialize logging
@@ -67,6 +68,8 @@ def votes_inspector(APIURL, operator_address):
 
     votes_resp = get_req(votes)
     aggregate_votes = votes_resp['aggregate_votes']
+    
+    UMEE_TOTAL_VOTES_GAUGE.set(len(denoms_resp))
 
     operator_moniker = get_moniker(validators, operator_address)
     if operator_moniker is None:
