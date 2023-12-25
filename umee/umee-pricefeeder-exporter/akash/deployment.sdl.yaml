@@ -2,7 +2,7 @@
 version: '2.0'
 services:
   web:
-    image: 'umee-pricefeeder-exporter:latest'
+    image: 'ghcr.io/stakelab-zone/umee-pricefeeder-exporter:latest'
     expose:
       - port: 8000
         as: 80
