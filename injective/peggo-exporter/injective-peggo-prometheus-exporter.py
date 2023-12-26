@@ -55,7 +55,7 @@ def main():
 
         lon = int(lon_data['state']['last_observed_nonce']) if 'state' in lon_data and 'last_observed_nonce' in lon_data['state'] else None
         lce = int(lce_data['last_claim_event']['ethereum_event_nonce']) if 'last_claim_event' in lce_data and 'ethereum_event_nonce' in lce_data['last_claim_event'] else None
-        delay = lce - lon
+        delay = lon - lce
         LATENCY_GAUGE.set(delay)
 
     else:
