@@ -68,6 +68,10 @@ For Kubernetes users, here's an Helm chart [here](https://github.com/StakeLab-Zo
 
 Access the Prometheus metrics at http://localhost:8000.
 
+**Grafana dashboard**
+
+![Peggo Injective Grafana Dashboard](../injective/grafana/peggo-injective-grafana.jpg)
+
 ## TODO
 
 - Grafana dashboard, alerts examples
