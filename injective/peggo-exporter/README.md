@@ -70,7 +70,7 @@ Access the Prometheus metrics at http://localhost:8000.
 
 **Grafana dashboard**
 
-![Peggo Injective Grafana Dashboard](../grafana/peggo-injective-grafana.jpg)
+![Peggo Injective Grafana Dashboard](./grafana/peggo-injective-grafana.jpg)
 
 ## TODO
 
