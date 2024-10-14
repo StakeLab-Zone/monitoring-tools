@@ -18,4 +18,8 @@ Here's a brief guide on how to use the scripts and exporters in each directory:
 
 [Ethereum RPC checker](./ethereum-rpc-checker/)
 
-    Golang exporter to check ETH nodes.
+    Golang exporter to check ETH nodes
+
+[Berachain validator tool](https://github.com/Skalv/validatorTools)
+
+    Manage your yield between all pools on berachain for your validator
