@@ -15,3 +15,7 @@ Here's a brief guide on how to use the scripts and exporters in each directory:
 
     Python Script to monitor injective peggo latency
     Prometheus Exporter to monitor injective peggo latency
+
+[Ethereum RPC checker](./ethereum-rpc-checker/)
+
+    Golang exporter to check ETH nodes.
