@@ -30,4 +30,4 @@ jobs:
         context: ./ethereum-blocks-exporter
         file: ./ethereum-blocks-exporter/Dockerfile
         push: true
-        tags: ghcr.io/${{ env.REPO_OWNER }}/peggo-exporter:latest
+        tags: ghcr.io/${{ env.REPO_OWNER }}/eth-blocks-exporter:latest
