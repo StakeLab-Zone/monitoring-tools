@@ -1,4 +1,4 @@
-name: Build and Push Docker Image for injective peggo exporter
+name: Build and Push Docker Image for ETH blocks exporter exporter
 on:
   push:
     branches: [ main ]
