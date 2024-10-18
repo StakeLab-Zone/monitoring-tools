@@ -37,7 +37,6 @@ go get gopkg.in/yaml.v2
 
 `go build -o eth-block-exporter cmd/main.go`
 
-
 ## Configuration
 
 Create a config.yaml file with your desired settings:
