@@ -1,0 +1,72 @@
+name: Build and Release Ethereum Block Exporter
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - './ethereum-blocks-exporter/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - './ethereum-blocks-exporter/**'
+  release:
+    types: [created]
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./injective/ethereum-blocks-exporter
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.22'
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v4
+        with:
+          version: latest
+          args: release --clean
+          workdir: ./ethereum-blocks-exporter
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  docker:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./injective/ethereum-blocks-exporter
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Lowercase Repository Owner
+        id: repo_owner
+        run: echo "REPO_OWNER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GH_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: ./ethereum-blocks-exporter
+          push: true
+          tags: ghcr.io/${{ env.REPO_OWNER }}/peggo-exporter:latest

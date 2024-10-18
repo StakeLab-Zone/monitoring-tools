@@ -1,0 +1,6 @@
+eth_endpoint: "https://localhost:8545"
+addresses:
+  - ""
+start_block: 1000000
+max_blocks: 1000
+monitor_all: true
