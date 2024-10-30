@@ -24,6 +24,9 @@ Here's a brief guide on how to use the scripts and exporters in each directory:
 
     Manage your yield between all pools on berachain for your validator
 
+[ Berachain ETH exporter](./berachain-eth-exporter/)
+    Golang exporter for ETH blocks on Berachain.
+
 [Berachain PoL monitor](./berachain-pol)
 
     Monitor your PoL (Proof of Liquidity) activities
