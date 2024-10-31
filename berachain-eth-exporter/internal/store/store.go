@@ -43,7 +43,6 @@ func (s *Store) initialize() error {
 				client VARCHAR(50),
 				version VARCHAR(50),
 				extra_data_hex TEXT,
-				extra_data_text TEXT,
 				tx_count INT DEFAULT 0,
 				is_empty BOOLEAN DEFAULT 0,
 				timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -62,7 +61,6 @@ func (s *Store) initialize() error {
 				client TEXT,
 				version TEXT,
 				extra_data_hex TEXT,
-				extra_data_text TEXT,
 				tx_count INTEGER DEFAULT 0,
 				is_empty BOOLEAN DEFAULT 0,
 				timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
