@@ -117,9 +117,10 @@ func (s *Store) StoreBlock(info types.BlockInfo) error {
 			(number, miner, validator_name, client, version, extra_data_hex, tx_count, is_empty, timestamp)
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	}
+
 	isEmptyVal := 0
 	if info.IsEmpty {
-	  isEmptyVal = 1
+		isEmptyVal = 1
 	}
 	_, err := s.db.Exec(query,
 		info.Number,
@@ -129,7 +130,7 @@ func (s *Store) StoreBlock(info types.BlockInfo) error {
 		info.Version,
 		info.ExtraDataHex,
 		info.TxCount,
-		IsEmptyVal,
+		isEmptyVal,
 		info.Timestamp,
 	)
 
