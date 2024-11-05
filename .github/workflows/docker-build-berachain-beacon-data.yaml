@@ -1,0 +1,33 @@
+name: Build and Push Docker Image for Berachain Beacon data
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'berachain-beacon-data/**'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check Out Repository
+      uses: actions/checkout@v2
+
+    - name: Lowercase Repository Owner
+      id: repo_owner
+      run: echo "REPO_OWNER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v1
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GH_TOKEN }}
+
+    - name: Build and Push Docker image for Berachain Beacon data
+      uses: docker/build-push-action@v2
+      with:
+        context: ./berachain-beacon-data
+        file: ./berachain-beacon-data/Dockerfile
+        push: true
+        tags: ghcr.io/${{ env.REPO_OWNER }}/berachain-beacon-data:latest
