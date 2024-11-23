@@ -33,7 +33,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the ingestion script and default validator mappings
 COPY beacon-ingestion.py .
-COPY validators.yaml /app/default-validators.yaml
+COPY validators.yaml /app/validators.yaml
 
 # Create entrypoint script that handles Kubernetes termination gracefully
 # and checks for custom validators.yaml
