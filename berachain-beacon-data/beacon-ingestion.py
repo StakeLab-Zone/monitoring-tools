@@ -50,18 +50,22 @@ class ValidatorSignature:
     voting_power: int
     proposer_priority: int
 
-def load_validator_mappings(mappings_file='validators.yaml'):
+def load_validator_mappings(mappings_file=None):
     """Load validator address to name mappings from YAML file"""
     validator_names = {}
     
     if not mappings_file:
-        print("\nWARNING: No validator mappings file specified")
-        return validator_names
+        default_path = '/app/validators.yaml'
+        config_path = '/app/config/validators.yaml'
         
-    # If only directory is specified, append default filename
-    if mappings_file == '.':
-        mappings_file = './validators.yaml'
-        
+        # Check for custom config first
+        if os.path.exists(config_path):
+            print(f"\nUsing custom validator mappings from: {config_path}")
+            mappings_file = config_path
+        else:
+            print(f"\nUsing default validator mappings from: {default_path}")
+            mappings_file = default_path
+            
     if not os.path.exists(mappings_file):
         print(f"\nWARNING: Validator mappings file not found at: {mappings_file}")
         return validator_names
@@ -82,20 +86,25 @@ def load_validator_mappings(mappings_file='validators.yaml'):
                 print(f"Warning: Expected list under 'validators' key, got: {type(mappings)}")
                 return validator_names
                 
-            # Process mappings
+            # Process mappings with case preservation
             for mapping in mappings:
                 if isinstance(mapping, str):
                     try:
                         address, name = mapping.split(':', 1)
-                        address = address.strip().upper()
+                        # Store original address for lookups, but use uppercase for storage
+                        original_address = address.strip()
+                        uppercase_address = original_address.upper()
                         name = name.strip()
                         
-                        if not address or not name:
+                        if not original_address or not name:
                             print(f"Warning: Empty address or name in mapping: {mapping}")
                             continue
                             
-                        validator_names[address] = name
-                        print(f"Loaded mapping: {address} -> {name}")
+                        validator_names[uppercase_address] = {
+                            'name': name,
+                            'original_address': original_address
+                        }
+                        print(f"Loaded mapping: {original_address} -> {name}")
                     except ValueError as e:
                         print(f"Warning: Invalid format in mapping: {mapping}")
                         continue
@@ -103,10 +112,10 @@ def load_validator_mappings(mappings_file='validators.yaml'):
         print(f"\nSuccessfully loaded {len(validator_names)} validator mappings")
         if validator_names:
             print("\nAll loaded mappings:")
-            for addr, name in sorted(validator_names.items()):
-                print(f"  {addr} -> {name}")
+            for addr, info in sorted(validator_names.items()):
+                print(f"  {info['original_address']} -> {info['name']}")
             print("\nAvailable addresses for matching:")
-            print(", ".join(sorted(validator_names.keys())))
+            print(", ".join(sorted(addr for addr in validator_names.keys())))
         
     except yaml.YAMLError as e:
         print(f"\nERROR parsing YAML file: {str(e)}")
@@ -601,8 +610,24 @@ class CosmosDataIngestion:
                 self.db_pool.return_connection(conn)
 
     def _get_validator_name(self, address):
-        """Get validator name from mapping"""
-        return self.validator_names.get(address, '')
+        """Get validator name from mapping with case-insensitive matching and original address preservation"""
+        if not address:
+            return ''
+                
+        # Convert address to uppercase for lookup
+        address_upper = address.upper()
+        
+        # Get validator info
+        validator_info = self.validator_names.get(address_upper)
+        
+        if validator_info:
+            name = validator_info['name']
+            original_address = validator_info['original_address']
+            print(f"Found mapping for {original_address} -> {name}")
+            return name
+        else:
+            print(f"No mapping found for {address}")
+            return ''
 
     def _store_validator_set(self, cursor, height: int, validators: List[Dict]):
         """Store validator set data with names"""
