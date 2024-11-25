@@ -43,12 +43,11 @@ func NewClientDetector() *ClientDetector {
 				},
 			},
 			"Erigon": {
-				signatures: []string{"erigon", "thorax/erigon", "erigontech/erigon"},
+				signatures: []string{"erigon"},
 				versions: []*regexp.Regexp{
 					regexp.MustCompile(`(?i)erigon/v?([\d\.]+)`),
 					regexp.MustCompile(`(?i)erigon_([\d\.]+)`),
-					regexp.MustCompile(`(?i)thorax/erigon:v([\d\.]+)`),
-					regexp.MustCompile(`(?i)erigontech/erigon:v([\d\.]+)`),
+					regexp.MustCompile(`(?i)erigon/(v[\d\.]+)`),
 				},
 			},
 			"Besu": {
