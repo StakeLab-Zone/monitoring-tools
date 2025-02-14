@@ -702,20 +702,48 @@ class CosmosDataIngestion:
             txs = block.get("data", {}).get("txs", [])
             evidence = block.get("evidence", {}).get("evidence", [])
 
+            # Fetch validator set for this height to get voting power
+            val_response = self.request_session.session.get(
+                f"{self.cosmos_rpc_url}/validators",
+                params={"height": height, "per_page": 100},  # Adjust per_page as needed
+                timeout=10
+            )
+            val_response.raise_for_status()
+            val_result = val_response.json()
+            
+            # Get proposer's voting power
+            proposer_address = header.get("proposer_address", "")
+            proposer_voting_power = 0
+            proposer_priority = 0
+            
+            if "result" in val_result:
+                validators = val_result["result"].get("validators", [])
+                for validator in validators:
+                    if validator.get("address") == proposer_address:
+                        proposer_voting_power = int(validator.get("voting_power", 0))
+                        proposer_priority = int(validator.get("proposer_priority", 0))
+                        break
+
             # Get total gas and fees
             total_gas_wanted = 0
             total_gas_used = 0
             total_fee = "0"
 
-            # Count valid signatures
-            valid_signatures = sum(1 for sig in last_commit.get("signatures", []) 
-                                if sig.get("block_id_flag") == 2 and sig.get("signature"))
+            # Count valid signatures according to CometBFT block_id_flag spec:
+            # BLOCK_ID_FLAG_UNKNOWN = 0  # error condition
+            # BLOCK_ID_FLAG_ABSENT  = 1  # vote not received
+            # BLOCK_ID_FLAG_COMMIT  = 2  # voted for the block that received majority
+            # BLOCK_ID_FLAG_NIL     = 3  # voted for nil
+            valid_signatures = sum(1 for sig in last_commit.get("signatures", [])
+                                if isinstance(sig, dict) and 
+                                sig.get("block_id_flag", 0) > 1 and  # Either COMMIT or NIL
+                                sig.get("signature"))
 
             return {
                 "height": int(header.get("height", 0)),
                 "hash": result.get("block_id", {}).get("hash", ""),
                 "time": header.get("time", ""),
-                "proposer_address": header.get("proposer_address", ""),
+                "proposer_address": proposer_address,
                 "chain_id": header.get("chain_id", ""),
                 "num_txs": len(txs),
                 "num_evidence": len(evidence),
@@ -737,8 +765,8 @@ class CosmosDataIngestion:
                 "version": header.get("version", {}).get("block", ""),
                 "parts_total": result.get("block_id", {}).get("parts", {}).get("total", 0),
                 "parts_hash": result.get("block_id", {}).get("parts", {}).get("hash", ""),
-                "total_voting_power": 0,  # This would need validator set query
-                "proposer_priority": 0   # This would need validator set query
+                "total_voting_power": proposer_voting_power,  # Now contains proposer's voting power
+                "proposer_priority": proposer_priority
             }
         except Exception as e:
             print(f"Error fetching block {height}: {str(e)}")
