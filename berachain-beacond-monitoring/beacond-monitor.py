@@ -136,15 +136,6 @@ class ValidatorMonitor:
                     try:
                         commit = block['result']['block']['last_commit']
                         signatures = commit.get('signatures', [])
-                        """
-                        From cometbft docs: https://docs.cometbft.com/v1.0/spec/core/data_structures
-                        enum BlockIDFlag {
-                          BLOCK_ID_FLAG_UNKNOWN = 0; // indicates an error condition
-                          BLOCK_ID_FLAG_ABSENT  = 1; // the vote was not received
-                          BLOCK_ID_FLAG_COMMIT  = 2; // voted for the block that received the majority
-                          BLOCK_ID_FLAG_NIL     = 3; // voted for nil
-                        }
-                        """
                         for sig in signatures:
                             if isinstance(sig, dict):
                                 validator_addr = sig.get('validator_address')
@@ -195,6 +186,8 @@ def main():
                       help='Comma-separated list of validator addresses to monitor')
     parser.add_argument('--port', type=int, default=2112,
                       help='Prometheus metrics port')
+    parser.add_argument('--host', default='0.0.0.0',
+                      help='Host interface to listen on (default: 0.0.0.0)')
     parser.add_argument('--interval', type=int, default=60,
                       help='Check interval in seconds')
 
@@ -204,8 +197,8 @@ def main():
 
     # Start Prometheus metrics server
     try:
-        start_http_server(args.port)
-        print(f"📈 Started metrics server on port {args.port}")
+        start_http_server(args.port, args.host)
+        print(f"📈 Started metrics server on {args.host}:{args.port}")
     except Exception as e:
         print(f"❌ Failed to start metrics server: {e}")
         return
