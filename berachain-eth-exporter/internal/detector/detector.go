@@ -23,8 +23,8 @@ func NewClientDetector() *ClientDetector {
 			"Geth": {
 				signatures: []string{"go-ethereum", "geth", "؃geth"},
 				versions: []*regexp.Regexp{
-					regexp.MustCompile(`(?i)geth/v?([\d\.]+)`),
-					regexp.MustCompile(`(?i)go([\d\.]+)`),
+        				regexp.MustCompile(`(?i)geth/v?(\d+\.\d+\.\d+)(?:\.\d+)?(?:-(unstable))?`),
+        				regexp.MustCompile(`(?i)go([\d\.]+)`),
 				},
 			},
 			"RETH": {
