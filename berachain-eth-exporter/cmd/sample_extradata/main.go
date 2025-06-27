@@ -2,20 +2,19 @@ package main
 
 import (
 	"bytes"
-	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"math/big"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
 
 const (
-	defaultRPCURL = "http://10.147.18.191:40003/"
-	sampleCount   = 500000
-	batchSize     = 10 // Number of blocks to request in each batch
+	defaultRPCURL = "http://10.147.18.191:41003/"
+	batchSize     = 50 // Number of blocks to request in each batch
 )
 
 var (
@@ -101,38 +100,79 @@ func getBlockExtraDataBatch(blockNums []uint64) (map[uint64]string, error) {
 	return extraDataMap, nil
 }
 
-func randomUint64(max uint64) uint64 {
-	nBig, _ := rand.Int(rand.Reader, big.NewInt(int64(max)))
-	return nBig.Uint64()
+func parseRange(args []string) (uint64, uint64, error) {
+	if len(args) == 0 {
+		// Default: scan all blocks from 1 to current
+		height, err := getCurrentBlock()
+		if err != nil {
+			return 0, 0, fmt.Errorf("failed to get current block: %v", err)
+		}
+		return 1, height, nil
+	}
+
+	if len(args) == 1 {
+		// Single argument: start from block 1 to specified block
+		end, err := strconv.ParseUint(args[0], 10, 64)
+		if err != nil {
+			return 0, 0, fmt.Errorf("invalid end block: %v", err)
+		}
+		return 1, end, nil
+	}
+
+	// Two arguments: start and end blocks
+	start, err := strconv.ParseUint(args[0], 10, 64)
+	if err != nil {
+		return 0, 0, fmt.Errorf("invalid start block: %v", err)
+	}
+
+	end, err := strconv.ParseUint(args[1], 10, 64)
+	if err != nil {
+		return 0, 0, fmt.Errorf("invalid end block: %v", err)
+	}
+
+	if start > end {
+		return 0, 0, fmt.Errorf("start block (%d) cannot be greater than end block (%d)", start, end)
+	}
+
+	return start, end, nil
 }
 
 func main() {
-	height, err := getCurrentBlock()
+	// Parse command line arguments for block range
+	startBlock, endBlock, err := parseRange(os.Args[1:])
 	if err != nil {
-		panic(err)
+		fmt.Printf("Usage: %s [start_block] [end_block]\n", os.Args[0])
+		fmt.Printf("  No args: scan all blocks from 1 to current\n")
+		fmt.Printf("  One arg: scan from block 1 to specified block\n")
+		fmt.Printf("  Two args: scan from start_block to end_block\n")
+		fmt.Printf("Error: %v\n", err)
+		return
 	}
-	fmt.Printf("Current block height: %d\n", height)
+
+	totalBlocks := endBlock - startBlock + 1
+	fmt.Printf("Scanning blocks %d to %d (%d total blocks)\n", startBlock, endBlock, totalBlocks)
+	fmt.Printf("Using RPC URL: %s\n", rpcURL)
 
 	seen := make(map[string]struct{})
 	start := time.Now()
+	blocksProcessed := uint64(0)
 
-	// Generate all random block numbers first
-	var blockNums []uint64
-	for i := 0; i < sampleCount; i++ {
-		blockNums = append(blockNums, randomUint64(height-1)+1)
-	}
-
-	// Process in batches
-	for i := 0; i < len(blockNums); i += batchSize {
-		end := i + batchSize
-		if end > len(blockNums) {
-			end = len(blockNums)
+	// Process blocks linearly in batches
+	for currentBlock := startBlock; currentBlock <= endBlock; currentBlock += uint64(batchSize) {
+		batchEnd := currentBlock + uint64(batchSize) - 1
+		if batchEnd > endBlock {
+			batchEnd = endBlock
 		}
 
-		batch := blockNums[i:end]
+		// Generate batch of consecutive block numbers
+		var batch []uint64
+		for i := currentBlock; i <= batchEnd; i++ {
+			batch = append(batch, i)
+		}
+
 		extraDataMap, err := getBlockExtraDataBatch(batch)
 		if err != nil {
-			fmt.Printf("Error fetching batch starting at %d: %v\n", i, err)
+			fmt.Printf("Error fetching batch %d-%d: %v\n", currentBlock, batchEnd, err)
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
@@ -147,18 +187,23 @@ func main() {
 			}
 		}
 
-		if i%1000 == 0 && i > 0 {
+		blocksProcessed += uint64(len(batch))
+
+		// Progress reporting every 1000 blocks
+		if blocksProcessed%1000 == 0 || currentBlock == endBlock {
 			elapsed := time.Since(start)
-			percent := float64(i) / float64(sampleCount) * 100
-			fmt.Printf("Progress: %d/%d (%.2f%%), %d unique extraData, elapsed: %s\n", i, sampleCount, percent, len(seen), elapsed.Truncate(time.Second))
+			percent := float64(blocksProcessed) / float64(totalBlocks) * 100
+			fmt.Printf("Progress: %d/%d (%.2f%%), %d unique extraData, elapsed: %s\n",
+				blocksProcessed, totalBlocks, percent, len(seen), elapsed.Truncate(time.Second))
 		}
 
-		time.Sleep(5 * time.Millisecond) // Reduced sleep time
+		time.Sleep(5 * time.Millisecond)
 	}
 
-	fmt.Println("Unique extraData values:")
+	fmt.Println("\nUnique extraData values:")
 	for ed := range seen {
 		fmt.Println(ed)
 	}
-	fmt.Printf("Done. Sampled %d blocks, found %d unique extraData. Total time: %s\n", sampleCount, len(seen), time.Since(start).Truncate(time.Second))
+	fmt.Printf("Done. Scanned %d blocks (%d to %d), found %d unique extraData. Total time: %s\n",
+		totalBlocks, startBlock, endBlock, len(seen), time.Since(start).Truncate(time.Second))
 }
