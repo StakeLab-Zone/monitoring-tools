@@ -7,23 +7,34 @@ import (
 	"fmt"
 	"math/big"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 )
 
 const (
-	rpcURL      = "http://10.147.18.191:40003/"
-	sampleCount = 500000
-	batchSize   = 10 // Number of blocks to request in each batch
+	defaultRPCURL = "http://10.147.18.191:40003/"
+	sampleCount   = 500000
+	batchSize     = 10 // Number of blocks to request in each batch
 )
 
-var client = &http.Client{
-	Timeout: 30 * time.Second,
-	Transport: &http.Transport{
-		MaxIdleConns:        100,
-		MaxIdleConnsPerHost: 100,
-		IdleConnTimeout:     90 * time.Second,
-	},
+var (
+	rpcURL = getEnvOrDefault("EL_ETHRPC_URL", defaultRPCURL)
+	client = &http.Client{
+		Timeout: 30 * time.Second,
+		Transport: &http.Transport{
+			MaxIdleConns:        100,
+			MaxIdleConnsPerHost: 100,
+			IdleConnTimeout:     90 * time.Second,
+		},
+	}
+)
+
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }
 
 func getCurrentBlock() (uint64, error) {
