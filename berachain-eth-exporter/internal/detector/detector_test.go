@@ -1,6 +1,7 @@
 package detector
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -15,42 +16,42 @@ func TestDetectClient(t *testing.T) {
 		expectedVersion string
 	}{
 		{
-			name:            "ASCII string encoded in HEX - reth example 1",
+			name:            "reth_v1.1.5",
 			extraDataHex:    "0x726574682f76312e312e352f6c696e7578",
 			extraDataText:   "",
 			expectedClient:  "reth",
 			expectedVersion: "1.1.5",
 		},
 		{
-			name:            "ASCII string encoded in HEX - reth example 2",
+			name:            "reth_v1.0.8",
 			extraDataHex:    "0x726574682f76312e302e382f6c696e7578",
 			extraDataText:   "",
 			expectedClient:  "reth",
 			expectedVersion: "1.0.8",
 		},
 		{
-			name:            "RLP encoded with 4 fields - geth example 1",
+			name:            "geth_v1.14.13",
 			extraDataHex:    "0xd883010e0d846765746888676f312e32332e33856c696e7578",
 			extraDataText:   "",
 			expectedClient:  "geth",
 			expectedVersion: "1.14.13",
 		},
 		{
-			name:            "RLP encoded with 4 fields - geth example 2",
+			name:            "geth_v1.15.11",
 			extraDataHex:    "0xd883010f0b846765746888676f312e32342e32856c696e7578",
 			extraDataText:   "",
 			expectedClient:  "geth",
 			expectedVersion: "1.15.11",
 		},
 		{
-			name:            "Empty extraData",
+			name:            "empty_reth_v1.3.x",
 			extraDataHex:    "0x",
 			extraDataText:   "",
-			expectedClient:  "Unknown",
-			expectedVersion: "",
+			expectedClient:  "Reth",
+			expectedVersion: "v1.3.x",
 		},
 		{
-			name:            "Invalid hex data",
+			name:            "invalid_unknown",
 			extraDataHex:    "0xinvalid",
 			extraDataText:   "",
 			expectedClient:  "Unknown",
@@ -61,6 +62,9 @@ func TestDetectClient(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client, version := detector.DetectClient(tt.extraDataHex, tt.extraDataText)
+
+			// Print input and result in a cleaner format
+			fmt.Printf("%-20s %s -> %s %s\n", tt.name, tt.extraDataHex, client, version)
 
 			if client != tt.expectedClient {
 				t.Errorf("DetectClient() client = %v, want %v", client, tt.expectedClient)

@@ -18,6 +18,11 @@ func (d *ClientDetector) DetectClient(extraDataHex string, extraDataText string)
 	// Clean the hex string
 	cleanHex := strings.TrimPrefix(extraDataHex, "0x")
 
+	// Special case: empty extraData indicates Reth v1.3.x
+	if cleanHex == "" {
+		return "Reth", "v1.3.x"
+	}
+
 	// First, try to decode as ASCII string from hex
 	if client, version := d.detectASCIIFromHex(cleanHex); client != "" {
 		return client, version
