@@ -2,131 +2,120 @@ package detector
 
 import (
 	"encoding/hex"
-	"log"
-	"regexp"
+	"fmt"
 	"strings"
+
+	"github.com/ethereum/go-ethereum/rlp"
 )
 
-type ClientDetector struct {
-	patterns map[string]struct {
-		signatures []string
-		versions   []*regexp.Regexp
-	}
-}
+type ClientDetector struct{}
 
 func NewClientDetector() *ClientDetector {
-	return &ClientDetector{
-		patterns: map[string]struct {
-			signatures []string
-			versions   []*regexp.Regexp
-		}{
-			"Geth": {
-				signatures: []string{"go-ethereum", "geth", "؃geth"},
-				versions: []*regexp.Regexp{
-        				regexp.MustCompile(`(?i)geth/v?(\d+\.\d+\.\d+)(?:\.\d+)?(?:-(unstable))?`),
-        				regexp.MustCompile(`(?i)go([\d\.]+)`),
-				},
-			},
-			"RETH": {
-				signatures: []string{"reth"},
-				versions: []*regexp.Regexp{
-					regexp.MustCompile(`(?i)reth/v?([\d\.]+)`),
-					regexp.MustCompile(`(?i)reth/(v[\d\.]+)`),
-				},
-			},
-			"Nethermind": {
-				signatures: []string{"nethermind", "nethm"},
-				versions: []*regexp.Regexp{
-					regexp.MustCompile(`(?i)nethermind/v?([\d\.]+)`),
-					regexp.MustCompile(`(?i)nethermind_([\d\.]+)`),
-					regexp.MustCompile(`(?i)nethm/([\d\.]+)`),
-				},
-			},
-			"Erigon": {
-				signatures: []string{"erigon"},
-				versions: []*regexp.Regexp{
-					regexp.MustCompile(`(?i)erigon/v?([\d\.]+)`),
-					regexp.MustCompile(`(?i)erigon_([\d\.]+)`),
-					regexp.MustCompile(`(?i)erigon/(v[\d\.]+)`),
-				},
-			},
-			"Besu": {
-				signatures: []string{"besu", "hyperledger"},
-				versions: []*regexp.Regexp{
-					regexp.MustCompile(`(?i)besu/v?([\d\.]+)`),
-					regexp.MustCompile(`(?i)hyperledger-besu/([\d\.]+)`),
-				},
-			},
-			"EthereumJS": {
-				signatures: []string{"ethereumjs", "ethereum-js"},
-				versions: []*regexp.Regexp{
-					regexp.MustCompile(`(?i)ethereumjs/v?([\d\.]+)`),
-					regexp.MustCompile(`(?i)ethereum-js/([\d\.]+)`),
-				},
-			},
-		},
-	}
+	return &ClientDetector{}
 }
 
 func (d *ClientDetector) DetectClient(extraDataHex string, extraDataText string) (string, string) {
-	// Try to decode hex first
-	var searchTexts []string
+	// Clean the hex string
+	cleanHex := strings.TrimPrefix(extraDataHex, "0x")
 
-	// Add the original data
-	searchTexts = append(searchTexts, strings.ToLower(extraDataText))
-
-	// Try hex decoding
-	if decoded, err := hex.DecodeString(strings.TrimPrefix(extraDataHex, "0x")); err == nil {
-		decodedText := strings.ToLower(string(decoded))
-		searchTexts = append(searchTexts, decodedText)
-		log.Printf("🔍 Decoded hex: '%s'", decodedText)
+	// Special case: empty extraData indicates Reth v1.3.x
+	if cleanHex == "" {
+		return "Reth", "v1.3.x"
 	}
 
-	// Add raw hex
-	searchTexts = append(searchTexts, strings.ToLower(extraDataHex))
+	// First, try to decode as ASCII string from hex
+	if client, version := d.detectASCIIFromHex(cleanHex); client != "" {
+		return client, version
+	}
 
-	log.Printf("🔍 Searching in texts: %v", searchTexts)
+	// Then, try to decode as RLP
+	if client, version := d.detectRLP(cleanHex); client != "" {
+		return client, version
+	}
 
-	// Check each search text
-	for _, searchText := range searchTexts {
-		for client, patterns := range d.patterns {
-			for _, sig := range patterns.signatures {
-				if strings.Contains(searchText, strings.ToLower(sig)) {
-					log.Printf("✅ Found signature '%s' for client '%s'", sig, client)
+	// If nothing found, return unknown
+	return "Unknown", ""
+}
 
-					// Try to find version
-					for _, verPattern := range patterns.versions {
-						if match := verPattern.FindStringSubmatch(searchText); len(match) > 1 {
-							log.Printf("✅ Detected %s version %s", client, match[1])
-							return client, match[1]
-						}
-					}
+func (d *ClientDetector) detectASCIIFromHex(hexStr string) (string, string) {
+	// Try to decode hex as ASCII string
+	decoded, err := hex.DecodeString(hexStr)
+	if err != nil {
+		return "", ""
+	}
 
-					log.Printf("✅ Detected %s (no version)", client)
-					return client, ""
-				}
+	decodedStr := string(decoded)
+
+	// Look for pattern like "bera-geth/v1.4.0-rc2/linux"
+	// We want the first two fields: client and version
+	parts := strings.Split(decodedStr, "/")
+	if len(parts) >= 2 {
+		client := parts[0]
+		version := parts[1]
+
+		// Clean up version (remove 'v' prefix if present)
+		version = strings.TrimPrefix(version, "v")
+
+		return client, version
+	}
+
+	return "", ""
+}
+
+func (d *ClientDetector) detectRLP(hexStr string) (string, string) {
+	decoded, err := hex.DecodeString(hexStr)
+	if err != nil {
+		return "", ""
+	}
+
+	var items []interface{}
+	err = rlp.DecodeBytes(decoded, &items)
+	if err != nil {
+		return "", ""
+	}
+
+	var client, version string
+
+	// If first field is a byte array of length >= 3, treat as version numbers and second as client
+	if len(items) >= 2 {
+		if versionBytes, ok := items[0].([]byte); ok && len(versionBytes) >= 3 {
+			version = fmt.Sprintf("%d.%d.%d", versionBytes[0], versionBytes[1], versionBytes[2])
+			if clientBytes, ok := items[1].([]byte); ok {
+				client = string(clientBytes)
+			} else if clientStr, ok := items[1].(string); ok {
+				client = clientStr
+			}
+			return client, version
+		}
+	}
+
+	// Otherwise, find first string/[]byte as client, second as version
+	foundClient := false
+	for _, item := range items {
+		if !foundClient {
+			if b, ok := item.([]byte); ok && len(b) > 0 {
+				client = string(b)
+				foundClient = true
+				continue
+			} else if s, ok := item.(string); ok && len(s) > 0 {
+				client = s
+				foundClient = true
+				continue
+			}
+		} else {
+			if b, ok := item.([]byte); ok && len(b) > 0 {
+				version = string(b)
+				break
+			} else if s, ok := item.(string); ok && len(s) > 0 {
+				version = s
+				break
 			}
 		}
 	}
 
-	// Common hex signatures
-	hexSignatures := map[string]string{
-		"67657468":               "Geth", // "geth" in hex
-		"676f2d657468657265756d": "Geth", // "go-ethereum" in hex
+	if client != "" {
+		return client, version
 	}
 
-	for hexSig, client := range hexSignatures {
-		if strings.Contains(strings.ToLower(extraDataHex), hexSig) {
-			log.Printf("✅ Detected %s from hex signature", client)
-			return client, ""
-		}
-	}
-
-	// Log the raw data for debugging
-	// log.Printf("❌ Unknown client data:")
-	// log.Printf("  Hex: '%s'", extraDataHex)
-	// log.Printf("  Text: '%s'", extraDataText)
-	// log.Printf("  Decoded attempts: %v", searchTexts)
-
-	return "Unknown", ""
+	return "", ""
 }
